@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/prateek951/node-bot#readme",
   "dependencies": {
+    "axios": "^0.18.0",
     "dotenv": "^6.2.0",
     "telegraf": "^3.25.5"
   }
