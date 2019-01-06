@@ -5,7 +5,8 @@
       "data": {
         "to": "hi",
         "from": "en",
-        "dnt": true
+        "dnt": true,
+        "messages": "[]"
       }
     }
   ]

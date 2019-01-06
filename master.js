@@ -56,21 +56,18 @@ bot.command("to", ({ message, reply, session }) => {
     session.to = lang;
     reply(`✅ "to" language set to ${lang} `);
 });
-bot.command("history", ({ reply }) => {
+bot.command('history', ctx => {
     try {
-        reply(
-            JSON.parse(session.messages)
-                .map(message => `${message.text} : ${message.translation}`)
-                .join("\n")
-        );
-    } catch (ex) {
-        console.log(ex);
+        ctx.reply(JSON.parse(ctx.session.messages).map(message => `${message.text}: ${message.translation}`).join('\n'))
+    } catch (err) {
+        console.error(err)
     }
-});
+})
+
 
 //user with the do not track option
-bot.command("clear", ({ session, messages }) => {
-    session.messages = JSON.stringify(messages);
+bot.command("clear", ({ session, reply }) => {
+    session.messages = JSON.stringify([]);
     reply("✅ History cleared");
 });
 bot.command("dnt", ({ session, reply }) => {
@@ -83,28 +80,32 @@ bot.command("dt", ({ session, reply }) => {
     reply("✅ Do track");
 });
 bot.on("message", async ({ message, reply, session }) => {
-    const lang = (session.from ? `${session.from}-` : ``) + (session.to || "en");
-    console.log(lang);
-    const response = await AXIOS_CLIENT.get(
-        "https://translate.yandex.net/api/v1.5/tr.json/translate",
-        {
-            params: {
-                key: process.env.YANDEX_API_KEY,
-                text: message.text,
-                lang: lang
+    try {
+        const lang = (session.from ? `${session.from}-` : ``) + (session.to || "en");
+        console.log(lang);
+        const response = await AXIOS_CLIENT.get(
+            "https://translate.yandex.net/api/v1.5/tr.json/translate",
+            {
+                params: {
+                    key: process.env.YANDEX_API_KEY,
+                    text: message.text,
+                    lang: lang
+                }
             }
+        );
+        const translation = response.data.text[0];
+        reply(translation);
+
+        if (session.dnt === true) {
+            return;
         }
-    );
-    const translation = response.data.text[0];
-    reply(translation);
 
-    if (session.dnt === true) {
-        return;
+        let messages = JSON.parse(session.messages) || [];
+        messages.push({ text: message.text, translation: translation });
+        session.messages = JSON.stringify(messages);
+    } catch (ex) {
+        console.error(ex);
     }
-
-    let messages = JSON.parse(session.messages) || [];
-    messages.push({ text: message.text, translation: translation });
-    session.messages = JSON.stringify(messages);
 });
 
 bot.startPolling();
